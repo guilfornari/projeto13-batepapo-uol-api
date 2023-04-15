@@ -64,17 +64,22 @@ app.get("/participants", async (req, res) => {
 
 //-messages-
 app.post("/messages", async (req, res) => {
+
     const validation = messagesSchema.validate(req.body);
     if (validation.error) return res.sendStatus(422);
     const { to, text, type } = req.body;
+    const { user } = req.headers;
+
     try {
         const chatMessage = {
-            from: "Working on it",
+            from: user,
             to: to,
             text: text,
             type: type,
             time: dayjs().format("HH:mm:ss")
         };
+        const userOffline = await db.collection("participants").findOne({ name: user });
+        if (!userOffline) return res.sendStatus(422);
         await db.collection("messages").insertOne(chatMessage);
         return res.sendStatus(201);
     } catch (error) {
@@ -83,8 +88,11 @@ app.post("/messages", async (req, res) => {
 });
 
 app.get("/messages", async (req, res) => {
+    const { user } = req.headers;
+
     try {
         const chatMessages = await db.collection("messages").find().toArray();
+
         return res.status(200).send(chatMessages);
 
     } catch (error) {

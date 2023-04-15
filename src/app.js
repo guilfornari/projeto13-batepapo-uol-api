@@ -92,13 +92,11 @@ app.get("/messages", async (req, res) => {
 
     try {
         const chatMessages = await db.collection("messages").find().toArray();
-
         return res.status(200).send(chatMessages);
-
     } catch (error) {
         return res.status(500).send(error.message);
     }
-})
+});
 
 //-connection-
 const PORT = 5000;

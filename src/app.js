@@ -78,8 +78,8 @@ app.post("/messages", async (req, res) => {
             type: type,
             time: dayjs().format("HH:mm:ss")
         };
-        const userOffline = await db.collection("participants").findOne({ name: user });
-        if (!userOffline) return res.sendStatus(422);
+        const isUserOnline = await db.collection("participants").findOne({ name: user });
+        if (!isUserOnline) return res.sendStatus(422);
         await db.collection("messages").insertOne(chatMessage);
         return res.sendStatus(201);
     } catch (error) {
@@ -99,6 +99,20 @@ app.get("/messages", async (req, res) => {
             .sort({ $natural: -1 }).limit(amount)
             .toArray();
         return res.status(200).send(chatMessages);
+    } catch (error) {
+        return res.status(500).send(error.message);
+    }
+});
+
+//-status-
+app.post("/status", async (req, res) => {
+    const { user } = req.headers;
+    if (!user) return res.sendStatus(404);
+    try {
+        const isUserOnline = await db.collection("participants").findOne({ name: user });
+        if (!isUserOnline) return res.sendStatus(404);
+        await db.collection("participants").updateOne({ name: user }, { $set: { name: user, lastStatus: Date.now() } })
+        return res.sendStatus(200);
     } catch (error) {
         return res.status(500).send(error.message);
     }

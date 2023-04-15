@@ -89,9 +89,15 @@ app.post("/messages", async (req, res) => {
 
 app.get("/messages", async (req, res) => {
     const { user } = req.headers;
+    const amount = parseInt(req.query.limit);
+    console.log(amount);
+    if (amount <= 0 || !amount) return res.sendStatus(422);
 
     try {
-        const chatMessages = await db.collection("messages").find().toArray();
+        const chatMessages = await db.collection("messages")
+            .find({ $or: [{ from: user }, { to: user }, { to: "Todos" }, { type: "message" }] })
+            .sort({ $natural: -1 }).limit(amount)
+            .toArray();
         return res.status(200).send(chatMessages);
     } catch (error) {
         return res.status(500).send(error.message);

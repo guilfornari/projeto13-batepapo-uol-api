@@ -90,7 +90,6 @@ app.post("/messages", async (req, res) => {
 app.get("/messages", async (req, res) => {
     const { user } = req.headers;
     const amount = parseInt(req.query.limit);
-    console.log(amount);
     if (amount <= 0 || !amount) return res.sendStatus(422);
 
     try {
@@ -120,8 +119,31 @@ app.post("/status", async (req, res) => {
 
 async function removeUsers() {
     try {
+        const kickedUsers = await db.collection("participants")
+            .find({ lastStatus: { $lt: Date.now() - 10000 } }).toArray();
+        console.log(kickedUsers);
         await db.collection("participants").deleteMany({ lastStatus: { $lt: Date.now() - 10000 } });
         console.log("removing berks...");
+        kickedUsers.forEach((u) => {
+            const statusMessage = {
+                from: u.name,
+                to: "Todos",
+                text: "sai da sala...",
+                type: "status",
+                time: dayjs().format("HH:mm:ss")
+            };
+            kickMessage(statusMessage);
+            console.log(statusMessage);
+        });
+
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+async function kickMessage(message) {
+    try {
+        await db.collection("messages").insertOne(message);
     } catch (error) {
         console.log(error);
     }

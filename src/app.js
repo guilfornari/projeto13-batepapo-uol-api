@@ -111,12 +111,23 @@ app.post("/status", async (req, res) => {
     try {
         const isUserOnline = await db.collection("participants").findOne({ name: user });
         if (!isUserOnline) return res.sendStatus(404);
-        await db.collection("participants").updateOne({ name: user }, { $set: { name: user, lastStatus: Date.now() } })
+        await db.collection("participants").updateOne({ name: user }, { $set: { name: user, lastStatus: Date.now() } });
         return res.sendStatus(200);
     } catch (error) {
         return res.status(500).send(error.message);
     }
 });
+
+async function removeUsers() {
+    try {
+        await db.collection("participants").deleteMany({ lastStatus: { $lt: Date.now() - 10000 } });
+        console.log("removing berks...");
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+setInterval(removeUsers, 15000);
 
 //-connection-
 const PORT = 5000;
